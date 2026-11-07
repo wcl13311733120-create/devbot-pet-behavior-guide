@@ -1,0 +1,12 @@
+{
+  "name": "pet-behavior-guide",
+  "version": "1.0.0",
+  "description": "宠物行为管理与训练指南平台 MVP — 行为问题库、训练课程、行为评估、社区互助",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.3"
+  }
+}

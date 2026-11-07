@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宠物行为管理与训练指南</title>
+<style>
+  :root { --bg:#f5f7fa; --card:#fff; --primary:#4CAF50; --accent:#FF9800; --danger:#f44336; --text:#333; --muted:#666; --line:#e0e0e0; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+  .container { max-width:1100px; margin:0 auto; padding:20px; }
+  header { background:linear-gradient(135deg,#4CAF50,#81C784); color:#fff; padding:30px 20px; border-radius:12px; margin-bottom:20px; }
+  header h1 { font-size:24px; margin-bottom:8px; }
+  header p { opacity:.9; font-size:14px; }
+  .tabs { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .tab { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; background:var(--card); color:var(--text); font-size:14px; transition:.2s; }
+  .tab.active { background:var(--primary); color:#fff; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+  .card { background:var(--card); border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+  .card h2 { font-size:18px; margin-bottom:12px; color:var(--primary); }
+  .card h3 { font-size:15px; margin:12px 0 6px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+  .behavior-card { border:1px solid var(--line); border-radius:10px; padding:16px; background:#fafafa; }
+  .behavior-card .name { font-weight:700; font-size:16px; margin-bottom:4px; }
+  .behavior-card .meta { font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; margin-right:4px; }
+  .badge.high { background:#ffebee; color:var(--danger); }
+  .badge.mid { background:#fff3e0; color:var(--accent); }
+  .badge.low { background:#e8f5e9; color:var(--primary); }
+  .badge.species { background:#e3f2fd; color:#1976d2; }
+  .tags { margin-top:8px; }
+  .tag { display:inline-block; padding:2px 6px; background:#f0f0f0; border-radius:4px; font-size:11px; margin:2px; color:var(--muted); }
+  .search-bar { display:flex; gap:8px; margin-bottom:16px; }
+  .search-bar input, .search-bar select { padding:10px; border:1px solid var(--line); border-radius:8px; font-size:14px; }
+  .search-bar input { flex:1; }
+  .btn { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-size:14px; transition:.2s; }
+  .btn-primary { background:var(--primary); color:#fff; }
+  .btn-primary:hover { background:#43a047; }
+  .btn-secondary { background:#e0e0e0; color:var(--text); }
+  .form-group { margin-bottom:12px; }
+  .form-group label { display:block; font-size:13px; color:var(--muted); margin-bottom:4px; }
+  .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:14px; }
+  .result-box { background:#f1f8e9; border-left:4px solid var(--primary); padding:16px; border-radius:8px; margin-top:12px; }
+  .result-box h3 { color:var(--primary); }
+  .risk-score { font-size:32px; font-weight:700; margin:8px 0; }
+  .risk-high { color:var(--danger); }
+  .risk-mid { color:var(--accent); }
+  .risk-low { color:var(--primary); }
+  .course-card { border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:12px; }
+  .course-card .title { font-weight:700; font-size:16px; margin-bottom:4px; }
+  .course-card .meta { font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .course-card ul { padding-left:20px; font-size:13px; color:var(--muted); }
+  .record-item { border-bottom:1px solid var(--line); padding:12px 0; }
+  .record-item:last-child { border-bottom:none; }
+  .record-item .title { font-weight:600; }
+  .record-item .meta { font-size:12px; color:var(--muted); }
+  .empty { text-align:center; color:var(--muted); padding:40px; }
+  .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:30px; padding:20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🐾 宠物行为管理与训练指南</h1>
+    <p>系统化宠物行为问题库 · 训练课程 · 行为风险评估 · 记录管理 — 帮助宠主科学养宠</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('behaviors')">行为问题库</button>
+    <button class="tab" onclick="showTab('assess')">行为评估</button>
+    <button class="tab" onclick="showTab('courses')">训练课程</button>
+    <button class="tab" onclick="showTab('records')">我的记录</button>
+  </div>
+
+  <!-- 行为问题库 -->
+  <div id="behaviors" class="panel active">
+    <div class="card">
+      <h2>行为问题库</h2>
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="搜索行为问题（如：咬、叫、焦虑）..." oninput="loadBehaviors()">
+        <select id="speciesFilter" onchange="loadBehaviors()">
+          <option value="">全部物种</option>
+          <option value="猫">猫</option>
+          <option value="狗">狗</option>
+        </select>
+      </div>
+      <div id="behaviorList" class="grid"></div>
+    </div>
+  </div>
+
+  <!-- 行为评估 -->
+  <div id="assess" class="panel">
+    <div class="card">
+      <h2>行为风险评估</h2>
+      <div class="form-group">
+        <label>宠物类型</label>
+        <select id="petType">
+          <option value="狗">狗</option>
+          <option value="猫">猫</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>行为问题</label>
+        <select id="behaviorSelect"></select>
+      </div>
+      <div class="form-group">
+        <label>发生频率</label>
+        <select id="frequency">
+          <option value="偶尔">偶尔</option>
+          <option value="经常">经常</option>
+          <option value="很少">很少</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>严重程度</label>
+        <select id="severity">
+          <option value="轻">轻</option>
+          <option value="中等">中等</option>
+          <option value="严重">严重</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="doAssess()">开始评估</button>
+      <div id="assessResult"></div>
+    </div>
+  </div>
+
+  <!-- 训练课程 -->
+  <div id="courses" class="panel">
+    <div class="card">
+      <h2>训练课程</h2>
+      <div class="search-bar">
+        <select id="courseSpecies" onchange="loadCourses()">
+          <option value="">全部</option>
+          <option value="猫">猫</option>
+          <option value="狗">狗</option>
+        </select>
+      </div>
+      <div id="courseList"></div>
+    </div>
+  </div>
+
+  <!-- 我的记录 -->
+  <div id="records" class="panel">
+    <div class="card">
+      <h2>我的记录</h2>
+      <div class="form-group">
+        <label>宠物昵称</label>
+        <input type="text" id="petName" placeholder="如：豆豆">
+      </div>
+      <div class="form-group">
+        <label>宠物类型</label>
+        <select id="recPetType">
+          <option value="狗">狗</option>
+          <option value="猫">猫</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>行为问题</label>
+        <select id="recBehavior"></select>
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea id="recNotes" rows="2" placeholder="记录具体情况..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="addRecord()">添加记录</button>
+      <div id="recordList" style="margin-top:20px;"></div>
+    </div>
+  </div>
+
+  <div class="footer">Pet Behavior Guide MVP · 基于 X 热搜话题 #1 开发 · DevBot</div>
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(id).classList.add('active');
+  if (id === 'behaviors') loadBehaviors();
+  if (id === 'assess') loadBehaviorSelect();
+  if (id === 'courses') loadCourses();
+  if (id === 'records') { loadBehaviorSelects(); loadRecords(); }
+}
+
+async function loadBehaviors() {
+  const q = document.getElementById('searchInput').value;
+  const species = document.getElementById('speciesFilter').value;
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (species) params.set('species', species);
+  const res = await fetch('/api/behaviors?' + params);
+  const data = await res.json();
+  const el = document.getElementById('behaviorList');
+  if (!data.length) { el.innerHTML = '<div class="empty">未找到匹配的行为问题</div>'; return; }
+  el.innerHTML = data.map(b => `
+    <div class="behavior-card">
+      <div class="name">${b.name}</div>
+      <div class="meta">
+        <span class="badge species">${b.species.join('/')}</span>
+        <span class="badge ${b.severity==='高'?'high':b.severity==='中'?'mid':'low'}">${b.severity}风险</span>
+        ${b.category}
+      </div>
+      <div style="font-size:13px;margin-bottom:6px;">${b.desc}</div>
+      <div style="font-size:12px;color:var(--muted);"><strong>可能原因：</strong>${b.causes.join('、')}</div>
+      <div style="font-size:12px;color:var(--primary);margin-top:4px;"><strong>建议方案：</strong>${b.solutions.join('、')}</div>
+      <div class="tags">${b.tags.map(t=>'<span class="tag">'+t+'</span>').join('')}</div>
+    </div>
+  `).join('');
+}
+
+async function loadBehaviorSelect() {
+  const res = await fetch('/api/behaviors');
+  const data = await res.json();
+  const sel = document.getElementById('behaviorSelect');
+  sel.innerHTML = data.map(b => `<option value="${b.id}">${b.name} (${b.species.join('/')})</option>`).join('');
+}
+
+async function loadBehaviorSelects() {
+  const res = await fetch('/api/behaviors');
+  const data = await res.json();
+  const sel = document.getElementById('recBehavior');
+  sel.innerHTML = data.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+}
+
+async function doAssess() {
+  const petType = document.getElementById('petType').value;
+  const behaviorId = document.getElementById('behaviorSelect').value;
+  const frequency = document.getElementById('frequency').value;
+  const severity = document.getElementById('severity').value;
+  const res = await fetch('/api/assess', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({petType,behaviorId,frequency,severity}) });
+  const d = await res.json();
+  const riskClass = d.risk>=70?'risk-high':d.risk>=40?'risk-mid':'risk-low';
+  document.getElementById('assessResult').innerHTML = `
+    <div class="result-box">
+      <h3>${d.behavior.name}</h3>
+      <div class="risk-score ${riskClass}">${d.risk}分 · ${d.level}</div>
+      <p><strong>建议：</strong>${d.advice}</p>
+      <h3 style="margin-top:12px;">推荐方案</h3>
+      <ul>${d.solutions.map(s=>'<li>'+s+'</li>').join('')}</ul>
+    </div>
+  `;
+}
+
+async function loadCourses() {
+  const species = document.getElementById('courseSpecies').value;
+  const params = species ? '?species='+species : '';
+  const res = await fetch('/api/courses'+params);
+  const data = await res.json();
+  const el = document.getElementById('courseList');
+  if (!data.length) { el.innerHTML = '<div class="empty">暂无课程</div>'; return; }
+  el.innerHTML = data.map(c => `
+    <div class="course-card">
+      <div class="title">${c.title}</div>
+      <div class="meta">${c.species.join('/')} · ${c.level} · ${c.duration}</div>
+      <p style="font-size:13px;margin-bottom:8px;">${c.desc}</p>
+      <ul>${c.steps.map(s=>'<li>'+s+'</li>').join('')}</ul>
+    </div>
+  `).join('');
+}
+
+async function addRecord() {
+  const petName = document.getElementById('petName').value;
+  const petType = document.getElementById('recPetType').value;
+  const behaviorId = document.getElementById('recBehavior').value;
+  const notes = document.getElementById('recNotes').value;
+  await fetch('/api/records', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({petName,petType,behaviorId,notes}) });
+  document.getElementById('petName').value = '';
+  document.getElementById('recNotes').value = '';
+  loadRecords();
+}
+
+async function loadRecords() {
+  const res = await fetch('/api/records');
+  const data = await res.json();
+  const el = document.getElementById('recordList');
+  if (!data.length) { el.innerHTML = '<div class="empty">暂无记录</div>'; return; }
+  el.innerHTML = data.map(r => `
+    <div class="record-item">
+      <div class="title">${r.petName || '未命名'} (${r.petType})</div>
+      <div class="meta">${new Date(r.ts).toLocaleString()} · 行为：${r.behaviorId} · ${r.notes||'无备注'}</div>
+    </div>
+  `).join('');
+}
+
+// init
+loadBehaviors();
+</script>
+</body>
+</html>
